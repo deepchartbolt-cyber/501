@@ -308,6 +308,8 @@ export const ar: Dict = {
       confirmDeleteItem: 'تمسح الحاجة؟',
       noItems: 'مفيش حاجات في الفئة دي',
       noCategories: 'مفيش فئات',
+      baseUnitLocked: 'مينفعش تغيّر الوحدة: فيه حركات أو نورمات على الحاجة دي',
+      deleteItemHasHistory: 'مينفعش تمسح: فيه سجل على الحاجة دي. وقّفها (شيل «شغّال»).',
     },
   },
 }

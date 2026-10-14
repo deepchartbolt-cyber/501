@@ -20,27 +20,31 @@ export const useAuth = create<AuthStore>((set) => ({
   error: null,
 
   init: async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      const { data: needsB } = await supabase.rpc('needs_bootstrap')
-      if (needsB) {
-        set({ state: 'bootstrap', error: null })
-      } else {
-        set({ state: 'login', error: null })
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { data: needsB } = await supabase.rpc('needs_bootstrap')
+        if (needsB) {
+          set({ state: 'bootstrap', error: null })
+        } else {
+          set({ state: 'login', error: null })
+        }
+        return
       }
-      return
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id,login,full_name,role,active,created_at')
+        .eq('id', session.user.id)
+        .single()
+      if (!profile || !profile.active) {
+        await supabase.auth.signOut()
+        set({ state: 'login', profile: null, error: 'Ваш аккаунт отключён. Обратитесь к администратору.' })
+        return
+      }
+      set({ state: 'ready', profile, error: null })
+    } catch (e) {
+      set({ state: 'login', profile: null, error: e instanceof Error ? e.message : String(e) })
     }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id,login,full_name,role,active,created_at')
-      .eq('id', session.user.id)
-      .single()
-    if (!profile || !profile.active) {
-      await supabase.auth.signOut()
-      set({ state: 'login', profile: null, error: 'Ваш аккаунт отключён. Обратитесь к администратору.' })
-      return
-    }
-    set({ state: 'ready', profile, error: null })
   },
 
   signIn: async (login, password) => {

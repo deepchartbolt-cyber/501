@@ -379,5 +379,13 @@ export async function updateItem(id: number, patch: Partial<Pick<Item, 'name' | 
 
 export async function deleteItem(id: number): Promise<void> {
   const { error } = await supabase.from('items').delete().eq('id', id)
-  if (error) throw new Error(error.message)
+  if (error) throw Object.assign(new Error(error.message), { code: error.code })
+}
+
+export async function itemHasHistory(itemId: number): Promise<boolean> {
+  const [moves, norms] = await Promise.all([
+    supabase.from('stock_moves').select('id', { head: true, count: 'exact' }).eq('item_id', itemId),
+    supabase.from('norm_rules').select('id', { head: true, count: 'exact' }).eq('item_id', itemId),
+  ])
+  return (moves.count ?? 0) > 0 || (norms.count ?? 0) > 0
 }

@@ -307,6 +307,8 @@ export const en: Dict = {
       confirmDeleteItem: 'Delete item?',
       noItems: 'No items in this category',
       noCategories: 'No categories',
+      baseUnitLocked: 'Unit cannot be changed: this item has movements or norms',
+      deleteItemHasHistory: 'Cannot delete: this item has history. Deactivate it (uncheck «Active»).',
     },
   },
 }

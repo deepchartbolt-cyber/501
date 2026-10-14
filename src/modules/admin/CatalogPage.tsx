@@ -8,6 +8,7 @@ import {
   createItem,
   updateItem,
   deleteItem,
+  itemHasHistory,
 } from '@/modules/admin/api'
 import type { Category, Item, ItemKind, BaseUnit } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -147,7 +148,13 @@ export function CatalogPage() {
                                 await deleteItem(it.id)
                                 toast(t.admin.catalog.delete, 'success')
                                 load()
-                              } catch (e) { toast(errorMessage(e), 'error') }
+                              } catch (e) {
+                                if ((e as { code?: string }).code === '23503') {
+                                  toast(t.admin.catalog.deleteItemHasHistory, 'error')
+                                } else {
+                                  toast(errorMessage(e), 'error')
+                                }
+                              }
                             }}
                             className="text-muted hover:text-bad shrink-0"
                           >
@@ -292,6 +299,14 @@ function ItemEditor({
   const [minStock, setMinStock] = useState(item?.min_stock != null ? String(item.min_stock) : '')
   const [trackOnHand, setTrackOnHand] = useState(item?.track_on_hand ?? false)
   const [active, setActive] = useState(item?.active ?? true)
+  const [unitLocked, setUnitLocked] = useState(false)
+
+  useEffect(() => {
+    if (!item) { setUnitLocked(false); return }
+    itemHasHistory(item.id)
+      .then((has) => setUnitLocked(has))
+      .catch(() => setUnitLocked(true))
+  }, [item])
 
   return (
     <Modal title={item ? t.admin.catalog.editItem : t.admin.catalog.addItem} onClose={onClose}>
@@ -307,14 +322,17 @@ function ItemEditor({
             className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.baseUnit}>
-          <div className="grid grid-cols-3 gap-2">
+          <div className={`grid grid-cols-3 gap-2 ${unitLocked ? 'opacity-50 pointer-events-none' : ''}`}>
             {baseUnitOptions.map((u) => (
-              <button key={u} onClick={() => setBaseUnit(u)}
-                className={`rounded-lg py-2 text-sm border transition-colors ${baseUnit === u ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-surface text-muted'}`}>
+              <button key={u} onClick={() => setBaseUnit(u)} disabled={unitLocked}
+                className={`rounded-lg py-2 text-sm border transition-colors ${baseUnit === u ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-surface text-muted'} ${unitLocked ? 'cursor-not-allowed' : ''}`}>
                 {baseUnitLabels[u]}
               </button>
             ))}
           </div>
+          {unitLocked && (
+            <p className="text-xs text-muted mt-1">{t.admin.catalog.baseUnitLocked}</p>
+          )}
         </Field>
         <div className="grid grid-cols-2 gap-2">
           <Field label={t.admin.catalog.packSize}>
