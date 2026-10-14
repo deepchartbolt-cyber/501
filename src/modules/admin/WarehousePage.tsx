@@ -125,8 +125,8 @@ export function WarehousePage() {
                 <thead>
                   <tr>
                     <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line">{t.admin.stock.title}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">Остаток / {t.admin.stock.min}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line">Статус</th>
+                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{t.common.balance} / {t.admin.stock.min}</th>
+                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line">{t.common.status}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -152,7 +152,7 @@ export function WarehousePage() {
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
                               item.below_min ? 'bg-bad-soft text-bad' : 'bg-ok-soft text-ok'
                             }`}>
-                              {item.below_min ? t.admin.stock.belowMin : 'в норме'}
+                              {item.below_min ? t.admin.stock.belowMin : t.admin.dashboard.noToOrder}
                             </span>
                           </td>
                         </tr>
@@ -190,7 +190,7 @@ export function WarehousePage() {
           </div>
         ))}
         {grouped.length === 0 && (
-          <div className="bg-surface border border-line rounded-xl px-4 py-6 text-center text-muted text-sm">Ничего не найдено</div>
+          <div className="bg-surface border border-line rounded-xl px-4 py-6 text-center text-muted text-sm">{t.common.noResults}</div>
         )}
       </div>
     </div>

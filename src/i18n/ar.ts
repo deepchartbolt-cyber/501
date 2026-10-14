@@ -108,6 +108,18 @@ export const ar: Dict = {
   adminBanner: 'داخل كمدير',
   offline: 'مفيش نت',
   retry: 'حاول تاني',
+  common: {
+    notFound: 'مش موجود',
+    noResults: 'مفيش نتائج',
+    close: 'اقفل',
+    document: 'مستند',
+    fullyStocked: 'الشقة متجهزة حسب النورم.',
+    status: 'الحالة',
+    balance: 'المتبقي',
+    minimum: 'أدنى',
+    noGroup: 'من غير مجموعة',
+    units: { pcs: 'قطعة', g: 'جم', ml: 'مل' },
+  },
   admin: {
     nav: {
       home: 'الرئيسية',

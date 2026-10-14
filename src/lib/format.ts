@@ -1,5 +1,5 @@
 import type { BaseUnit, Item } from '@/lib/database.types'
-import { currentLang } from '@/i18n'
+import { currentDict, currentLang } from '@/i18n'
 
 const cairoTz = 'Africa/Cairo'
 
@@ -8,11 +8,7 @@ function locale(): string {
 }
 
 function unitShort(unit: BaseUnit): string {
-  switch (unit) {
-    case 'pcs': return 'шт'
-    case 'g': return 'г'
-    case 'ml': return 'мл'
-  }
+  return currentDict().common.units[unit]
 }
 
 export function formatDate(iso: string | null): string {

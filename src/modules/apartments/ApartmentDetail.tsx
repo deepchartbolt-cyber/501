@@ -61,7 +61,7 @@ export function ApartmentDetail() {
   }
 
   if (loading) return <div className="px-4 pt-8 text-center text-muted">{t.app.loading}</div>
-  if (!apartment) return <div className="px-4 pt-8 text-center text-muted">Не найдено</div>
+  if (!apartment) return <div className="px-4 pt-8 text-center text-muted">{t.common.notFound}</div>
 
   return (
     <div className="min-h-screen bg-app">

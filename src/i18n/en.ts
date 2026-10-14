@@ -107,6 +107,18 @@ export const en: Dict = {
   adminBanner: 'You are signed in as admin',
   offline: 'No connection',
   retry: 'Retry',
+  common: {
+    notFound: 'Not found',
+    noResults: 'Nothing found',
+    close: 'Close',
+    document: 'Document',
+    fullyStocked: 'The apartment is fully stocked.',
+    status: 'Status',
+    balance: 'Balance',
+    minimum: 'min.',
+    noGroup: 'No group',
+    units: { pcs: 'pcs', g: 'g', ml: 'ml' },
+  },
   admin: {
     nav: {
       home: 'Home',

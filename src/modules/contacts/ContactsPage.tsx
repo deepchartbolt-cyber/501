@@ -16,13 +16,13 @@ export function ContactsPage() {
   const grouped = useMemo(() => {
     const map = new Map<string, Contact[]>()
     for (const c of contacts) {
-      const key = c.group_name ?? 'Без группы'
+      const key = c.group_name ?? t.common.noGroup
       const list = map.get(key) ?? []
       list.push(c)
       map.set(key, list)
     }
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
-  }, [contacts])
+  }, [contacts, t.common.noGroup])
 
   return (
     <div className="px-4 pt-6 pb-28">

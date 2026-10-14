@@ -16,12 +16,6 @@ import { toast, errorMessage } from '@/lib/toast'
 import { Plus, Trash2, Edit3, X, Check, ChevronRight, ChevronDown, Package, Folder } from 'lucide-react'
 
 const baseUnitOptions: BaseUnit[] = ['pcs', 'g', 'ml']
-const baseUnitLabels: Record<BaseUnit, string> = {
-  pcs: 'шт',
-  g: 'г',
-  ml: 'мл',
-}
-
 export function CatalogPage() {
   const { t, n } = useI18n()
   const kindLabels: Record<ItemKind, string> = {
@@ -134,8 +128,8 @@ export function CatalogPage() {
                           <div className="flex-1 min-w-0">
                             <span className={`text-sm ${it.active ? 'text-ink' : 'text-muted line-through'}`}>{it.name}</span>
                             <span className="text-xs text-muted ml-2">
-                              {it.pack_size > 1 ? `${n(String(it.pack_size))} ${it.pack_label}` : baseUnitLabels[it.base_unit]}
-                              {it.min_stock != null && ` · мин. ${n(String(it.min_stock))}`}
+                              {it.pack_size > 1 ? `${n(String(it.pack_size))} ${it.pack_label}` : t.common.units[it.base_unit]}
+                              {it.min_stock != null && ` · ${t.common.minimum} ${n(String(it.min_stock))}`}
                             </span>
                           </div>
                           <button onClick={() => setEditingItem({ item: it, categoryId: cat.id })} className="text-muted hover:text-accent shrink-0">
@@ -295,7 +289,7 @@ function ItemEditor({
   const [name, setName] = useState(item?.name ?? '')
   const [baseUnit, setBaseUnit] = useState<BaseUnit>(item?.base_unit ?? 'pcs')
   const [packSize, setPackSize] = useState(String(item?.pack_size ?? 1))
-  const [packLabel, setPackLabel] = useState(item?.pack_label ?? 'шт')
+  const [packLabel, setPackLabel] = useState(item?.pack_label ?? t.common.units.pcs)
   const [minStock, setMinStock] = useState(item?.min_stock != null ? String(item.min_stock) : '')
   const [trackOnHand, setTrackOnHand] = useState(item?.track_on_hand ?? false)
   const [active, setActive] = useState(item?.active ?? true)
@@ -326,7 +320,7 @@ function ItemEditor({
             {baseUnitOptions.map((u) => (
               <button key={u} onClick={() => setBaseUnit(u)} disabled={unitLocked}
                 className={`rounded-lg py-2 text-sm border transition-colors ${baseUnit === u ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-surface text-muted'} ${unitLocked ? 'cursor-not-allowed' : ''}`}>
-                {baseUnitLabels[u]}
+                {t.common.units[u]}
               </button>
             ))}
           </div>
@@ -369,7 +363,7 @@ function ItemEditor({
           name: name.trim(),
           base_unit: baseUnit,
           pack_size: Number(packSize) || 1,
-          pack_label: packLabel.trim() || 'шт',
+          pack_label: packLabel.trim() || t.common.units.pcs,
           min_stock: minStock.trim() ? Number(minStock) : null,
           track_on_hand: trackOnHand,
           active: item ? active : undefined,

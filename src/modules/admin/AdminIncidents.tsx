@@ -95,7 +95,7 @@ export function AdminIncidents() {
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-muted">{kindLabels[inc.kind]}</span>
                       <span className="text-xs text-muted">·</span>
-                      <span className="text-xs text-muted">{n(String(inc.qty))} шт</span>
+                      <span className="text-xs text-muted">{n(String(inc.qty))} {t.common.units.pcs}</span>
                       <span className="text-xs text-muted">·</span>
                       <span className="text-xs text-muted">{n(formatDateTime(inc.created_at))}</span>
                     </div>

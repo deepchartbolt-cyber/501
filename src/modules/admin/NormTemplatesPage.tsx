@@ -10,12 +10,8 @@ const aptTypes: AptType[] = ['studio', '1br', '2br']
 
 const normTypeOrder: NormType[] = ['asset_standing', 'turnover_replenish', 'cleaning_consumption']
 
-function unitShort(unit: BaseUnit): string {
-  switch (unit) {
-    case 'pcs': return 'шт'
-    case 'g': return 'г'
-    case 'ml': return 'мл'
-  }
+function unitShort(unit: BaseUnit, units: Record<BaseUnit, string>): string {
+  return units[unit]
 }
 
 export function NormTemplatesPage() {
@@ -145,7 +141,7 @@ export function NormTemplatesPage() {
                       <div key={nr.id} className="px-4 py-2.5 flex items-center justify-between">
                         <div className="min-w-0">
                           <span className="text-sm text-ink">{item?.name ?? `#${n(String(nr.item_id))}`}</span>
-                          <span className="text-xs text-muted ml-1">{n(String(nr.qty))} {item ? unitShort(item.base_unit) : ''}</span>
+                          <span className="text-xs text-muted ml-1">{n(String(nr.qty))} {item ? unitShort(item.base_unit, t.common.units) : ''}</span>
                           {nr.note && <span className="text-xs text-muted block">{nr.note}</span>}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -217,7 +213,7 @@ function NormEditorModal({
             <label className="block text-sm text-ink mb-1">{t.admin.normTemplates.qty}</label>
             <div className="flex items-center gap-2">
               <input type="number" min="0" step="0.001" value={qty} onChange={(e) => setQty(e.target.value)} className="flex-1 bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
-              {selectedItem && <span className="text-sm text-muted shrink-0">{unitShort(selectedItem.base_unit)}</span>}
+              {selectedItem && <span className="text-sm text-muted shrink-0">{unitShort(selectedItem.base_unit, t.common.units)}</span>}
             </div>
           </div>
           <div>

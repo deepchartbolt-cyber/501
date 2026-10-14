@@ -105,6 +105,18 @@ export const ru = {
   adminBanner: 'Вы вошли как админ',
   offline: 'Нет соединения',
   retry: 'Повторить',
+  common: {
+    notFound: 'Не найдено',
+    noResults: 'Ничего не найдено',
+    close: 'Закрыть',
+    document: 'Документ',
+    fullyStocked: 'Квартира укомплектована по норме.',
+    status: 'Статус',
+    balance: 'Остаток',
+    minimum: 'мин.',
+    noGroup: 'Без группы',
+    units: { pcs: 'шт', g: 'г', ml: 'мл' },
+  },
   admin: {
     nav: {
       home: 'Главная',

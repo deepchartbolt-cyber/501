@@ -120,7 +120,7 @@ export function AdminApartmentDetail() {
     if (!reverseEventId) return
     try {
       await reverseCleaning(reverseEventId, reverseReason.trim() || null)
-      toast('Уборка отменена', 'success')
+      toast(t.admin.apartments.reversed, 'success')
       setReverseEventId(null)
       setReverseReason('')
       loadAll()
@@ -136,7 +136,7 @@ export function AdminApartmentDetail() {
       const staffIds = recalcStaffIds.length > 0 ? recalcStaffIds : null
       const leadStaffId = staffIds && staffIds.length > 0 ? staffIds[0] : null
       await recalculateCleaning(recalcEventId, cleanedAt, staffIds, leadStaffId)
-      toast('Уборка пересчитана', 'success')
+      toast(t.admin.apartments.recalculate, 'success')
       setRecalcEventId(null)
       setRecalcDate('')
       setRecalcStaffIds([])
@@ -179,12 +179,12 @@ export function AdminApartmentDetail() {
         {loading ? (
           <div className="p-6 text-center text-muted text-sm">{t.app.loading}</div>
         ) : !apartment ? (
-          <div className="p-6 text-center text-muted text-sm">Не найдено</div>
+          <div className="p-6 text-center text-muted text-sm">{t.common.notFound}</div>
         ) : (
           <div className="p-5 pb-8">
             <div className="flex items-center justify-between mb-4">
               <button onClick={close} className="bg-surface border border-line text-ink rounded-lg px-3 py-1.5 text-sm font-medium">
-                Закрыть
+                {t.common.close}
               </button>
             </div>
             <h2 className="text-xl font-semibold text-ink m-0">{apartment.code}</h2>
@@ -216,7 +216,7 @@ export function AdminApartmentDetail() {
                 </button>
               </>
             ) : (
-              <p className="text-muted text-sm">Квартира укомплектована по норме.</p>
+              <p className="text-muted text-sm">{t.common.fullyStocked}</p>
             )}
 
             {/* Tabs */}
@@ -345,7 +345,7 @@ export function AdminApartmentDetail() {
               </button>
             </div>
             {issueResult.doc_number && (
-              <p className="text-sm text-muted mb-3">Документ: {n(issueResult.doc_number)}</p>
+              <p className="text-sm text-muted mb-3">{t.common.document}: {n(issueResult.doc_number)}</p>
             )}
             {issueResult.issued.length > 0 && (
               <div className="mb-3">

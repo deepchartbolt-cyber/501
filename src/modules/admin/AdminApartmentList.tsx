@@ -141,7 +141,7 @@ export function AdminApartmentList() {
         </div>
       ))}
       {grouped.length === 0 && (
-        <div className="px-4 py-6 text-center text-muted text-sm">Ничего не найдено</div>
+        <div className="px-4 py-6 text-center text-muted text-sm">{t.common.noResults}</div>
       )}
     </div>
   )
