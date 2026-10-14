@@ -208,7 +208,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                     className="w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-app border-b border-line last:border-0"
                   >
                     <span className="text-sm text-ink truncate">{s.name}</span>
-                    <span className="text-xs text-muted shrink-0 ml-2">{formatQty(s.qty, s)}</span>
+                    <span className="text-xs text-muted shrink-0 ml-2">{n(formatQty(s.qty, s))}</span>
                   </button>
                 ))}
               </div>

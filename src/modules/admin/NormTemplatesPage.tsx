@@ -19,7 +19,7 @@ function unitShort(unit: BaseUnit): string {
 }
 
 export function NormTemplatesPage() {
-  const { t } = useI18n()
+  const { t, n } = useI18n()
   const aptTypeLabels: Record<AptType, string> = {
     studio: t.admin.normTemplates.studio,
     '1br': t.admin.normTemplates.br1,
@@ -55,10 +55,10 @@ export function NormTemplatesPage() {
 
   const grouped = useMemo(() => {
     const map = new Map<NormType, NormRuleRow[]>()
-    for (const n of norms) {
-      const list = map.get(n.norm_type) ?? []
-      list.push(n)
-      map.set(n.norm_type, list)
+    for (const nr of norms) {
+      const list = map.get(nr.norm_type) ?? []
+      list.push(nr)
+      map.set(nr.norm_type, list)
     }
     return map
   }, [norms])
@@ -139,20 +139,20 @@ export function NormTemplatesPage() {
                 <p className="text-sm text-muted px-3">{t.admin.normTemplates.noNorms}</p>
               ) : (
                 <div className="bg-surface rounded-xl border border-line divide-y divide-[var(--line)]">
-                  {items.map((n) => {
-                    const item = stock.find((s) => s.item_id === n.item_id)
+                  {items.map((nr) => {
+                    const item = stock.find((s) => s.item_id === nr.item_id)
                     return (
-                      <div key={n.id} className="px-4 py-2.5 flex items-center justify-between">
+                      <div key={nr.id} className="px-4 py-2.5 flex items-center justify-between">
                         <div className="min-w-0">
-                          <span className="text-sm text-ink">{item?.name ?? `#${n.item_id}`}</span>
-                          <span className="text-xs text-muted ml-1">{n.qty} {item ? unitShort(item.base_unit) : ''}</span>
-                          {n.note && <span className="text-xs text-muted block">{n.note}</span>}
+                          <span className="text-sm text-ink">{item?.name ?? `#${n(String(nr.item_id))}`}</span>
+                          <span className="text-xs text-muted ml-1">{n(String(nr.qty))} {item ? unitShort(item.base_unit) : ''}</span>
+                          {nr.note && <span className="text-xs text-muted block">{nr.note}</span>}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <button onClick={() => setEditingNorm(n)} className="text-muted hover:text-accent">
+                          <button onClick={() => setEditingNorm(nr)} className="text-muted hover:text-accent">
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={async () => { await deleteNormRule(n.id); reload() }} className="text-muted hover:text-bad">
+                          <button onClick={async () => { await deleteNormRule(nr.id); reload() }} className="text-muted hover:text-bad">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>

@@ -1,17 +1,30 @@
 import type { BaseUnit, Item } from '@/lib/database.types'
+import { currentLang } from '@/i18n'
 
 const cairoTz = 'Africa/Cairo'
+
+function locale(): string {
+  return currentLang() === 'ar' ? 'ar-EG' : 'ru-RU'
+}
+
+function unitShort(unit: BaseUnit): string {
+  switch (unit) {
+    case 'pcs': return 'шт'
+    case 'g': return 'г'
+    case 'ml': return 'мл'
+  }
+}
 
 export function formatDate(iso: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleDateString('ru-RU', { timeZone: cairoTz, day: '2-digit', month: '2-digit', year: 'numeric' })
+  return d.toLocaleDateString(locale(), { timeZone: cairoTz, day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 export function formatDateTime(iso: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleString('ru-RU', {
+  return d.toLocaleString(locale(), {
     timeZone: cairoTz,
     day: '2-digit',
     month: '2-digit',
@@ -36,36 +49,36 @@ export function relativeTime(iso: string | null): string {
   const diffMin = Math.floor(diffMs / 60000)
   const diffH = Math.floor(diffMin / 60)
   const diffD = Math.floor(diffH / 24)
-  if (diffMin < 1) return 'только что'
-  if (diffMin < 60) return `${diffMin} мин назад`
-  if (diffH < 24) return `${diffH} ч назад`
-  if (diffD < 7) return `${diffD} дн назад`
+  const loc = locale()
+  if (diffMin < 1) return loc === 'ar-EG' ? 'الآن' : 'только что'
+  if (diffMin < 60) return loc === 'ar-EG' ? `منذ ${diffMin.toLocaleString(loc)} دقيقة` : `${diffMin.toLocaleString(loc)} мин назад`
+  if (diffH < 24) return loc === 'ar-EG' ? `منذ ${diffH.toLocaleString(loc)} ساعة` : `${diffH.toLocaleString(loc)} ч назад`
+  if (diffD < 7) return loc === 'ar-EG' ? `منذ ${diffD.toLocaleString(loc)} يوم` : `${diffD.toLocaleString(loc)} дн назад`
   return formatDate(iso)
 }
 
 export function formatQty(qty: number, item: Pick<Item, 'base_unit' | 'pack_size' | 'pack_label'>): string {
+  const loc = locale()
   const isConsumable = item.pack_size > 1
   if (isConsumable) {
     const packs = qty / item.pack_size
-    const packsStr = packs.toLocaleString('ru-RU', { maximumFractionDigits: 1 })
-    const baseStr = Math.round(qty).toLocaleString('ru-RU')
+    const packsStr = packs.toLocaleString(loc, { maximumFractionDigits: 1 })
+    const baseStr = Math.round(qty).toLocaleString(loc)
     return `${packsStr} ${item.pack_label} (${baseStr} ${unitShort(item.base_unit)})`
   }
-  return `${qty.toLocaleString('ru-RU', { maximumFractionDigits: 3 })} ${unitShort(item.base_unit)}`
+  return `${qty.toLocaleString(loc, { maximumFractionDigits: 3 })} ${unitShort(item.base_unit)}`
 }
-
-function unitShort(unit: BaseUnit): string {
-  switch (unit) {
-    case 'pcs': return 'шт'
-    case 'g': return 'г'
-    case 'ml': return 'мл'
-  }
-}
-
-const egpFormatter = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'EGP' })
 
 export function formatEGP(amount: number): string {
-  return egpFormatter.format(amount)
+  const loc = locale()
+  if (loc === 'ar-EG') {
+    return new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP' }).format(amount)
+  }
+  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'EGP' }).format(amount)
+}
+
+export function formatNum(value: number, opts?: Intl.NumberFormatOptions): string {
+  return value.toLocaleString(locale(), opts)
 }
 
 export function cairoLocalToISO(localStr: string): string | null {

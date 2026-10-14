@@ -97,15 +97,15 @@ export function Dashboard() {
       {/* 3-counter strip */}
       <div className="grid grid-cols-3 bg-surface border border-line rounded-xl mb-5 overflow-hidden">
         <div className="px-4 py-3.5 border-r border-line">
-          <b className="text-2xl font-semibold text-ink block">{toOrder.length}</b>
+          <b className="text-2xl font-semibold text-ink block">{n(String(toOrder.length))}</b>
           <span className="text-muted text-xs">{t.admin.dashboard.toOrder}</span>
         </div>
         <div className="px-4 py-3.5 border-r border-line">
-          <b className="text-2xl font-semibold text-ink block">{incompleteCount}</b>
+          <b className="text-2xl font-semibold text-ink block">{n(String(incompleteCount))}</b>
           <span className="text-muted text-xs">{t.admin.dashboard.gaps}</span>
         </div>
         <div className="px-4 py-3.5">
-          <b className="text-2xl font-semibold text-ink block">{shortages.length}</b>
+          <b className="text-2xl font-semibold text-ink block">{n(String(shortages.length))}</b>
           <span className="text-muted text-xs">{t.admin.dashboard.shortages}</span>
         </div>
       </div>
@@ -125,11 +125,11 @@ export function Dashboard() {
                 <div key={r.item_id} className="flex items-center gap-3 py-2.5 border-t border-line first:border-t-0">
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-ink truncate">{r.name}</div>
-                    <div className="text-muted text-xs">{r.category}, {formatQty(r.qty, r)} / {r.min_stock}</div>
+                    <div className="text-muted text-xs">{r.category}, {n(formatQty(r.qty, r))} / {n(String(r.min_stock))}</div>
                     <ProgressBar value={(r.qty / r.min_stock) * 100} color="var(--bad)" className="mt-1.5" />
                   </div>
                   <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap bg-bad-soft text-bad">
-                    {t.admin.dashboard.shortage}: {r.shortage}
+                    {t.admin.dashboard.shortage}: {n(String(r.shortage))}
                   </span>
                 </div>
               ))}
@@ -169,7 +169,7 @@ export function Dashboard() {
                       <div className="text-muted text-xs">{buildingMap.get(apt.building_id) ?? '?'}</div>
                       <ProgressBar value={p} color={pctColor(p)} className="mt-1.5" />
                       <div className="text-muted text-xs mt-1">
-                        {missingQty > 0 ? `${t.admin.dashboard.gap} ${missingQty}` : 'полная'}
+                        {missingQty > 0 ? `${t.admin.dashboard.gap} ${n(String(missingQty))}` : t.admin.apartments.completeness}
                       </div>
                     </button>
                   )
@@ -194,7 +194,7 @@ export function Dashboard() {
                 <div key={ev.id} className="bg-surface rounded-xl border border-line px-4 py-3">
                   {payload.items?.map((it, i) => (
                     <p key={i} className="text-sm text-bad">
-                      {it.item}: {it.balance}
+                      {it.item}: {n(String(it.balance))}
                     </p>
                   ))}
                 </div>

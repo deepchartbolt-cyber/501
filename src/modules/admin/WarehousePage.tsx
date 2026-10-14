@@ -144,8 +144,8 @@ export function WarehousePage() {
                             <span className="text-sm text-ink">{item.name}</span>
                           </td>
                           <td className="px-2.5 py-2.5 border-b border-line whitespace-nowrap" style={{ minWidth: '140px' }}>
-                            <span className={item.below_min ? 'text-bad' : 'text-ink'}>{formatQty(item.qty, item)}</span>
-                            <span className="text-muted text-xs"> / {item.min_stock ?? '—'}</span>
+                            <span className={item.below_min ? 'text-bad' : 'text-ink'}>{n(formatQty(item.qty, item))}</span>
+                            <span className="text-muted text-xs"> / {item.min_stock != null ? n(String(item.min_stock)) : '—'}</span>
                             <ProgressBar value={minPct} color={item.below_min ? 'var(--bad)' : 'var(--ok)'} />
                           </td>
                           <td className="px-2.5 py-2.5 border-b border-line">
@@ -171,9 +171,9 @@ export function WarehousePage() {
                                       <div className="min-w-0">
                                         <span className="text-ink">{m.source_type}</span>
                                         {m.note && <span className="text-muted"> · {m.note}</span>}
-                                        <span className="text-muted block">{formatDateTime(m.moved_at)}</span>
+                                        <span className="text-muted block">{n(formatDateTime(m.moved_at))}</span>
                                       </div>
-                                      <span className="text-muted shrink-0">{m.qty}</span>
+                                      <span className="text-muted shrink-0">{n(String(m.qty))}</span>
                                     </div>
                                   ))}
                                 </div>

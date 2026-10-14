@@ -23,7 +23,7 @@ const baseUnitLabels: Record<BaseUnit, string> = {
 }
 
 export function CatalogPage() {
-  const { t } = useI18n()
+  const { t, n } = useI18n()
   const kindLabels: Record<ItemKind, string> = {
     asset: t.admin.catalog.kindAsset,
     consumable: t.admin.catalog.kindConsumable,
@@ -98,7 +98,7 @@ export function CatalogPage() {
                     <Folder className="w-4 h-4 text-muted shrink-0" />
                     <span className="text-sm font-medium text-ink truncate">{cat.name}</span>
                     <span className="text-xs text-muted shrink-0">{kindLabels[cat.kind]}</span>
-                    <span className="text-xs text-muted shrink-0">· {catItems.length}</span>
+                    <span className="text-xs text-muted shrink-0">· {n(String(catItems.length))}</span>
                   </button>
                   <button
                     onClick={() => setAddingItem(cat.id)}
@@ -134,8 +134,8 @@ export function CatalogPage() {
                           <div className="flex-1 min-w-0">
                             <span className={`text-sm ${it.active ? 'text-ink' : 'text-muted line-through'}`}>{it.name}</span>
                             <span className="text-xs text-muted ml-2">
-                              {it.pack_size > 1 ? `${it.pack_size} ${it.pack_label}` : baseUnitLabels[it.base_unit]}
-                              {it.min_stock != null && ` · мин. ${it.min_stock}`}
+                              {it.pack_size > 1 ? `${n(String(it.pack_size))} ${it.pack_label}` : baseUnitLabels[it.base_unit]}
+                              {it.min_stock != null && ` · мин. ${n(String(it.min_stock))}`}
                             </span>
                           </div>
                           <button onClick={() => setEditingItem({ item: it, categoryId: cat.id })} className="text-muted hover:text-accent shrink-0">

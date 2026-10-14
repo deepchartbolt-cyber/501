@@ -12,7 +12,7 @@ const typeOrder: AptType[] = ['studio', '1br', '2br']
 type TypeFilter = 'all' | AptType
 
 export function ApartmentList() {
-  const { t } = useI18n()
+  const { t, n } = useI18n()
   const typeLabels: Record<AptType, string> = {
     studio: t.apartments.typeStudio,
     '1br': t.apartments.type1br,
@@ -76,7 +76,7 @@ export function ApartmentList() {
 
       {pendingCount > 0 && (
         <div className="mb-4 bg-warn-soft border border-line rounded-xl px-4 py-2.5 text-sm text-warn">
-          {t.cleaning.pending}: {pendingCount}
+          {t.cleaning.pending}: {n(String(pendingCount))}
         </div>
       )}
 

@@ -25,7 +25,7 @@ const typeOrder: AptType[] = ['studio', '1br', '2br']
 type TypeFilter = 'all' | AptType
 
 export function AdminApartmentList() {
-  const { t } = useI18n()
+  const { t, n } = useI18n()
   const typeLabels: Record<AptType, string> = {
     studio: t.apartments.typeStudio,
     '1br': t.apartments.type1br,
@@ -132,7 +132,7 @@ export function AdminApartmentList() {
                   <div className="text-muted text-xs">{buildingMap.get(apt.building_id) ?? '?'}</div>
                   <ProgressBar value={p} color={pctColor(p)} />
                   <div className="text-muted text-xs mt-1">
-                    {missingQty > 0 ? `${t.admin.dashboard.gap} ${missingQty}` : 'полная'}
+                    {missingQty > 0 ? `${t.admin.dashboard.gap} ${n(String(missingQty))}` : t.admin.apartments.completeness}
                   </div>
                 </button>
               )

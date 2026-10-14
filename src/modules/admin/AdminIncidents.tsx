@@ -21,7 +21,7 @@ const kindIcons: Record<IncidentKind, React.ComponentType<{ className?: string }
 }
 
 export function AdminIncidents() {
-  const { t } = useI18n()
+  const { t, n } = useI18n()
   const statusLabels: Record<IncidentStatus, string> = {
     new: t.incidents.statusNew,
     confirmed: t.incidents.statusConfirmed,
@@ -88,16 +88,16 @@ export function AdminIncidents() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-ink">{aptMap.get(inc.apartment_id) ?? `#${inc.apartment_id}`}</span>
+                      <span className="text-sm font-medium text-ink">{aptMap.get(inc.apartment_id) ?? `#${n(String(inc.apartment_id))}`}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[inc.status]}`}>{statusLabels[inc.status]}</span>
                     </div>
-                    <p className="text-sm text-ink">{inc.free_text ?? `#${inc.item_id}`}</p>
+                    <p className="text-sm text-ink">{inc.free_text ?? `#${n(String(inc.item_id))}`}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-muted">{kindLabels[inc.kind]}</span>
                       <span className="text-xs text-muted">·</span>
-                      <span className="text-xs text-muted">{inc.qty} шт</span>
+                      <span className="text-xs text-muted">{n(String(inc.qty))} шт</span>
                       <span className="text-xs text-muted">·</span>
-                      <span className="text-xs text-muted">{formatDateTime(inc.created_at)}</span>
+                      <span className="text-xs text-muted">{n(formatDateTime(inc.created_at))}</span>
                     </div>
                     {inc.comment && <p className="text-xs text-muted mt-1.5 bg-app rounded-lg px-2.5 py-1.5">{inc.comment}</p>}
                     {inc.resolution_note && <p className="text-xs text-muted mt-1">{inc.resolution_note}</p>}

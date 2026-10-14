@@ -39,7 +39,7 @@ function ProgressBar({ value, color }: { value: number; color: string }) {
 }
 
 export function AdminApartmentDetail() {
-  const { t } = useI18n()
+  const { t, n } = useI18n()
   const normTypeLabels: Record<NormType, string> = {
     asset_standing: t.apartments.normInventory,
     turnover_replenish: t.apartments.normTurnover,
@@ -150,20 +150,20 @@ export function AdminApartmentDetail() {
 
   const groupedOverrides = useMemo(() => {
     const map = new Map<NormType, NormRuleRow[]>()
-    for (const n of overrideNorms) {
-      const list = map.get(n.norm_type) ?? []
-      list.push(n)
-      map.set(n.norm_type, list)
+    for (const nr of overrideNorms) {
+      const list = map.get(nr.norm_type) ?? []
+      list.push(nr)
+      map.set(nr.norm_type, list)
     }
     return map
   }, [overrideNorms])
 
   const groupedTemplates = useMemo(() => {
     const map = new Map<NormType, NormRuleRow[]>()
-    for (const n of templateNorms) {
-      const list = map.get(n.norm_type) ?? []
-      list.push(n)
-      map.set(n.norm_type, list)
+    for (const nr of templateNorms) {
+      const list = map.get(nr.norm_type) ?? []
+      list.push(nr)
+      map.set(nr.norm_type, list)
     }
     return map
   }, [templateNorms])
@@ -191,7 +191,7 @@ export function AdminApartmentDetail() {
             <p className="text-muted text-sm">{apartment.type}</p>
 
             {/* Completeness */}
-            <div className="font-semibold text-sm text-ink mt-4 mb-2">{t.admin.apartments.completeness} {completenessPct}%</div>
+            <div className="font-semibold text-sm text-ink mt-4 mb-2">{t.admin.apartments.completeness} {n(String(completenessPct))}%</div>
             <ProgressBar value={completenessPct} color={pctColor(completenessPct)} />
 
             {/* Gap list + issue all */}
@@ -202,7 +202,7 @@ export function AdminApartmentDetail() {
                   {gapItems.map((g) => (
                     <div key={`${g.item_id}`} className="px-3 py-2.5 flex items-center justify-between">
                       <span className="text-sm text-ink">{g.name}</span>
-                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-bad-soft text-bad">−{g.gap}</span>
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-bad-soft text-bad">−{n(String(g.gap))}</span>
                     </div>
                   ))}
                 </div>
@@ -245,28 +245,28 @@ export function AdminApartmentDetail() {
                       </div>
                       <div className="bg-surface border border-line rounded-lg divide-y divide-[var(--line)]">
                         {overrides.length > 0 ? (
-                          overrides.map((n) => (
-                            <div key={n.id} className="px-3 py-2.5 flex items-center justify-between">
+                          overrides.map((nr) => (
+                            <div key={nr.id} className="px-3 py-2.5 flex items-center justify-between">
                               <div className="min-w-0">
-                                <span className="text-sm text-ink">{stock.find((s) => s.item_id === n.item_id)?.name ?? `#${n.item_id}`}</span>
-                                {n.note && <span className="text-xs text-muted block">{n.note}</span>}
+                                <span className="text-sm text-ink">{stock.find((s) => s.item_id === nr.item_id)?.name ?? `#${n(String(nr.item_id))}`}</span>
+                                {nr.note && <span className="text-xs text-muted block">{nr.note}</span>}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-sm text-muted">{n.qty}</span>
-                                <button onClick={() => setEditingNorm(n)} className="text-muted hover:text-accent">
+                                <span className="text-sm text-muted">{n(String(nr.qty))}</span>
+                                <button onClick={() => setEditingNorm(nr)} className="text-muted hover:text-accent">
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </button>
-                                <button onClick={async () => { await deleteNormRule(n.id); loadAll() }} className="text-muted hover:text-bad">
+                                <button onClick={async () => { await deleteNormRule(nr.id); loadAll() }} className="text-muted hover:text-bad">
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </div>
                           ))
                         ) : (
-                          templates.map((n) => (
-                            <div key={n.id} className="px-3 py-2.5 flex items-center justify-between opacity-60">
-                              <span className="text-sm text-ink">{stock.find((s) => s.item_id === n.item_id)?.name ?? `#${n.item_id}`}</span>
-                              <span className="text-sm text-muted">{n.qty} ({t.admin.apartments.template})</span>
+                          templates.map((nr) => (
+                            <div key={nr.id} className="px-3 py-2.5 flex items-center justify-between opacity-60">
+                              <span className="text-sm text-ink">{stock.find((s) => s.item_id === nr.item_id)?.name ?? `#${n(String(nr.item_id))}`}</span>
+                              <span className="text-sm text-muted">{n(String(nr.qty))} ({t.admin.apartments.template})</span>
                             </div>
                           ))
                         )}
@@ -286,7 +286,7 @@ export function AdminApartmentDetail() {
                   events.map((ev) => (
                     <div key={ev.id} className="bg-surface border border-line rounded-lg px-4 py-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-ink">{formatDateTime(ev.cleaned_at)}</span>
+                        <span className="text-sm font-medium text-ink">{n(formatDateTime(ev.cleaned_at))}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${ev.status === 'done' ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>
                           {ev.status === 'done' ? t.admin.apartments.done : t.admin.apartments.reversed}
                         </span>
@@ -302,7 +302,7 @@ export function AdminApartmentDetail() {
                           ))}
                         </p>
                       )}
-                      <p className="text-xs text-muted mt-0.5">{t.admin.apartments.revision}: {ev.revision}</p>
+                      <p className="text-xs text-muted mt-0.5">{t.admin.apartments.revision}: {n(String(ev.revision))}</p>
                       {ev.note && <p className="text-xs text-muted mt-1">{ev.note}</p>}
                       {ev.status === 'reversed' && ev.reverse_reason && (
                         <p className="text-xs text-bad mt-1">{ev.reverse_reason}</p>
@@ -345,7 +345,7 @@ export function AdminApartmentDetail() {
               </button>
             </div>
             {issueResult.doc_number && (
-              <p className="text-sm text-muted mb-3">Документ: {issueResult.doc_number}</p>
+              <p className="text-sm text-muted mb-3">Документ: {n(issueResult.doc_number)}</p>
             )}
             {issueResult.issued.length > 0 && (
               <div className="mb-3">
@@ -354,7 +354,7 @@ export function AdminApartmentDetail() {
                   {issueResult.issued.map((it) => (
                     <div key={it.item_id} className="px-3 py-2 flex items-center justify-between">
                       <span className="text-sm text-ink">{it.name}</span>
-                      <span className="text-sm text-ok">{it.qty}</span>
+                      <span className="text-sm text-ok">{n(String(it.qty))}</span>
                     </div>
                   ))}
                 </div>
@@ -367,7 +367,7 @@ export function AdminApartmentDetail() {
                   {issueResult.short.map((it) => (
                     <div key={it.item_id} className="px-3 py-2 flex items-center justify-between">
                       <span className="text-sm text-ink">{it.name}</span>
-                      <span className="text-sm text-bad">{it.issued}/{it.need}</span>
+                      <span className="text-sm text-bad">{n(String(it.issued))}/{n(String(it.need))}</span>
                     </div>
                   ))}
                 </div>

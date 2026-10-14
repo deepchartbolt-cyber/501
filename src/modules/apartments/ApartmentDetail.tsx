@@ -38,10 +38,10 @@ export function ApartmentDetail() {
 
   const groupedNorms = useMemo(() => {
     const map = new Map<NormType, SvNorm[]>()
-    for (const n of norms) {
-      const list = map.get(n.norm_type) ?? []
-      list.push(n)
-      map.set(n.norm_type, list)
+    for (const nr of norms) {
+      const list = map.get(nr.norm_type) ?? []
+      list.push(nr)
+      map.set(nr.norm_type, list)
     }
     return map
   }, [norms])
@@ -78,7 +78,7 @@ export function ApartmentDetail() {
             {apartment.last_cleaned_at
               ? isToday(apartment.last_cleaned_at)
                 ? t.apartments.cleanedToday
-                : `${t.apartments.lastCleaned}: ${formatDateTime(apartment.last_cleaned_at)}`
+                : `${t.apartments.lastCleaned}: ${n(formatDateTime(apartment.last_cleaned_at))}`
               : t.apartments.noCleaning}
           </span>
         </div>
@@ -99,11 +99,11 @@ export function ApartmentDetail() {
                 <div key={nt}>
                   <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">{normTypeLabels[nt]}</h3>
                   <div className="bg-surface rounded-xl border border-line divide-y divide-[var(--line)]">
-                    {items.map((n) => (
-                      <div key={`${n.item_id}-${n.norm_type}`} className="px-4 py-3 flex items-center justify-between">
-                        <span className="text-sm text-ink">{n.item_name}</span>
+                    {items.map((nr) => (
+                      <div key={`${nr.item_id}-${nr.norm_type}`} className="px-4 py-3 flex items-center justify-between">
+                        <span className="text-sm text-ink">{nr.item_name}</span>
                         <span className="text-sm text-muted">
-                          {formatQty(n.qty, { base_unit: n.base_unit, pack_size: n.pack_label ? 2 : 1, pack_label: n.pack_label })}
+                          {n(formatQty(nr.qty, { base_unit: nr.base_unit, pack_size: nr.pack_label ? 2 : 1, pack_label: nr.pack_label }))}
                         </span>
                       </div>
                     ))}
@@ -120,7 +120,7 @@ export function ApartmentDetail() {
             {notes.map((note) => (
               <div key={note.id} className="bg-surface rounded-xl border border-line px-4 py-3">
                 <p className="text-sm text-ink">{note.body}</p>
-                <p className="text-xs text-muted mt-1.5">{formatDateTime(note.created_at)}</p>
+                <p className="text-xs text-muted mt-1.5">{n(formatDateTime(note.created_at))}</p>
               </div>
             ))}
             <div className="fixed bottom-20 left-0 right-0 bg-surface border-t border-line px-4 py-3">

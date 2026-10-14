@@ -34,7 +34,7 @@ export function CleaningSheet() {
       .finally(() => setLoading(false))
   }, [aptId])
 
-  const writeoffItems = useMemo(() => norms.filter((n) => writeoffTypes.includes(n.norm_type)), [norms])
+  const writeoffItems = useMemo(() => norms.filter((nr) => writeoffTypes.includes(nr.norm_type)), [norms])
   const needsStaff = writeoffItems.length > 0
 
   const toggleStaff = (staffId: number) => {
@@ -122,10 +122,10 @@ export function CleaningSheet() {
               <p className="text-sm text-muted">{t.cleaning.noWriteoff}</p>
             ) : (
               <div className="bg-app rounded-xl border border-line divide-y divide-[var(--line)]">
-                {writeoffItems.map((n) => (
-                  <div key={`${n.item_id}-${n.norm_type}`} className="px-3 py-2.5 flex items-center justify-between">
-                    <span className="text-sm text-ink">{n.item_name}</span>
-                    <span className="text-sm text-muted">{formatQty(n.qty, { base_unit: n.base_unit, pack_size: n.pack_label ? 2 : 1, pack_label: n.pack_label })}</span>
+                {writeoffItems.map((nr) => (
+                  <div key={`${nr.item_id}-${nr.norm_type}`} className="px-3 py-2.5 flex items-center justify-between">
+                    <span className="text-sm text-ink">{nr.item_name}</span>
+                    <span className="text-sm text-muted">{n(formatQty(nr.qty, { base_unit: nr.base_unit, pack_size: nr.pack_label ? 2 : 1, pack_label: nr.pack_label }))}</span>
                   </div>
                 ))}
               </div>
@@ -157,7 +157,7 @@ export function CleaningSheet() {
           {result?.shortages && result.shortages.length > 0 && (
             <div className="bg-warn-soft border border-line rounded-xl px-3 py-2.5">
               <p className="text-sm font-medium text-warn mb-1">{t.cleaning.shortages}</p>
-              {result.shortages.map((s) => <p key={s.item_id} className="text-xs text-warn">{s.item}: {s.balance}</p>)}
+              {result.shortages.map((s) => <p key={s.item_id} className="text-xs text-warn">{s.item}: {n(String(s.balance))}</p>)}
             </div>
           )}
         </div>
