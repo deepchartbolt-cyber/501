@@ -35,9 +35,9 @@ export function BootstrapScreen() {
         </div>
         <h1 className="text-lg text-muted text-center mb-6">{t.auth.bootstrapTitle}</h1>
         <form onSubmit={submit} className="space-y-4">
-          <Input label={t.auth.bootstrapName} value={fullName} onChange={setFullName} />
-          <Input label={t.auth.bootstrapLogin} value={login} onChange={setLogin} />
-          <Input label={t.auth.bootstrapPassword} value={password} onChange={setPassword} type="password" />
+          <Input label={t.auth.bootstrapName} value={fullName} onChange={setFullName} name="fullName" autoComplete="name" />
+          <Input label={t.auth.bootstrapLogin} value={login} onChange={setLogin} name="username" autoComplete="username" />
+          <Input label={t.auth.bootstrapPassword} value={password} onChange={setPassword} type="password" name="new-password" autoComplete="new-password" />
           {error && <p className="text-sm text-bad">{error}</p>}
           <button type="submit" className="w-full bg-accent text-white rounded-xl py-3 font-medium transition-opacity hover:opacity-90">
             {t.auth.bootstrapSubmit}
@@ -81,8 +81,8 @@ export function LoginScreen() {
           </div>
         </div>
         <form onSubmit={submit} className="space-y-4">
-          <Input label={t.auth.login} value={login} onChange={setLogin} />
-          <Input label={t.auth.password} value={password} onChange={setPassword} type="password" />
+          <Input label={t.auth.login} value={login} onChange={setLogin} name="username" autoComplete="username" />
+          <Input label={t.auth.password} value={password} onChange={setPassword} type="password" name="password" autoComplete="current-password" />
           {error && <p className="text-sm text-bad">{error}</p>}
           <button type="submit" className="w-full bg-accent text-white rounded-xl py-3 font-medium transition-opacity hover:opacity-90">
             {t.auth.loginSubmit}
@@ -98,19 +98,26 @@ function Input({
   value,
   onChange,
   type = 'text',
+  name,
+  autoComplete,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   type?: string
+  name: string
+  autoComplete: string
 }) {
   const { t } = useI18n()
   return (
     <label className="block">
       <span className="block text-sm text-muted mb-1.5">{label}</span>
       <input
+        id={name}
+        name={name}
         type={type}
         value={value}
+        autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
         className="w-full bg-surface text-ink rounded-xl px-4 py-3 border border-line focus:border-accent focus:outline-none transition-colors"
       />
