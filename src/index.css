@@ -109,3 +109,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .anim-drawer, .anim-scrim, .anim-sheet { animation: none; }
 }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; color: #000 !important; font-size: 12px; }
+  .bg-app, .bg-surface { background: #fff !important; }
+  .text-ink { color: #000 !important; }
+  .text-muted { color: #555 !important; }
+  .border-line { border-color: #ccc !important; }
+  .print-area { page-break-inside: avoid; }
+  .print-area + .print-area { page-break-before: auto; }
+}

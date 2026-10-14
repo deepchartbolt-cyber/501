@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, postMove } from '@/modules/admin/api'
-import type { WarehouseStockRow, Apartment, Staff } from '@/lib/database.types'
+import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, fetchSuppliers, postDocument } from '@/modules/admin/api'
+import type { WarehouseStockRow, Apartment, Staff, Supplier, PostDocumentResult } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, Minus, Trash2, Loader as Loader2, Check, X } from 'lucide-react'
+import { Plus, Minus, Trash2, Loader as Loader2, Check, X, FileText } from 'lucide-react'
 
 interface MoveOpDef {
   op: string
@@ -15,10 +15,12 @@ interface MoveOpDef {
   needsCost: boolean
 }
 
-
 interface CartLine {
   itemId: number
   itemName: string
+  packSize: number
+  packLabel: string
+  baseUnit: string
   qty: string
   unitCost: string
 }
@@ -39,23 +41,27 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [stock, setStock] = useState<WarehouseStockRow[]>([])
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [staffList, setStaffList] = useState<Staff[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [op, setOp] = useState<string>(() => searchParams.get('op') ?? 'receipt')
   const [apartmentId, setApartmentId] = useState<number | null>(null)
   const [staffId, setStaffId] = useState<number | null>(null)
+  const [supplierId, setSupplierId] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [search, setSearch] = useState('')
   const [posting, setPosting] = useState(false)
+  const [result, setResult] = useState<PostDocumentResult | null>(null)
 
   useEffect(() => {
-    Promise.all([fetchWarehouseStock(), fetchApartmentsAdmin(), fetchAllStaff()])
-      .then(([s, a, st]) => {
+    Promise.all([fetchWarehouseStock(), fetchApartmentsAdmin(), fetchAllStaff(), fetchSuppliers()])
+      .then(([s, a, st, sup]) => {
         setStock(s)
         setApartments(a)
         setStaffList(st.filter((x) => x.active))
+        setSuppliers(sup)
       })
-      .catch(() => {})
+      .catch((e) => toast(errorMessage(e), 'error'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -68,7 +74,15 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const addToCart = (item: WarehouseStockRow) => {
     setCart((prev) => {
       if (prev.some((l) => l.itemId === item.item_id)) return prev
-      return [...prev, { itemId: item.item_id, itemName: item.name, qty: '1', unitCost: '' }]
+      return [...prev, {
+        itemId: item.item_id,
+        itemName: item.name,
+        packSize: item.pack_size,
+        packLabel: item.pack_label,
+        baseUnit: item.base_unit,
+        qty: '1',
+        unitCost: '',
+      }]
     })
   }
 
@@ -93,23 +107,29 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
       toast(t.admin.move.staff, 'error')
       return
     }
+    const lines = cart
+      .map((line) => {
+        const qtyNum = Number(line.qty)
+        if (!qtyNum || qtyNum <= 0) return null
+        const costNum = opDef.needsCost && line.unitCost ? Number(line.unitCost) : null
+        return { item_id: line.itemId, qty: qtyNum, unit_cost: costNum }
+      })
+      .filter((l): l is { item_id: number; qty: number; unit_cost: number | null } => l !== null)
+    if (lines.length === 0) {
+      toast(t.admin.move.empty, 'error')
+      return
+    }
     setPosting(true)
     try {
-      for (const line of cart) {
-        const qty = Number(line.qty)
-        if (!qty || qty <= 0) continue
-        await postMove({
-          op,
-          item: line.itemId,
-          qty,
-          apartment: opDef.needsApartment ? apartmentId : null,
-          staff: opDef.needsStaff ? staffId : null,
-          unitCost: opDef.needsCost && line.unitCost ? Number(line.unitCost) : null,
-          note: note.trim() || null,
-        })
-      }
-      toast(t.admin.move.success, 'success')
-      onDone()
+      const res = await postDocument({
+        op,
+        lines,
+        apartment: opDef.needsApartment ? apartmentId : null,
+        staff: opDef.needsStaff ? staffId : null,
+        supplier: opDef.needsCost ? supplierId : null,
+        note: note.trim() || null,
+      })
+      setResult(res)
     } catch (e) {
       toast(errorMessage(e), 'error')
     } finally {
@@ -123,6 +143,42 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
         <div className="fixed inset-0 bg-black/45 z-[60] anim-scrim" onClick={onClose} />
         <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] bg-surface rounded-2xl p-6 max-w-sm w-full">
           <div className="text-center text-muted text-sm">{t.app.loading}</div>
+        </div>
+      </>
+    )
+  }
+
+  if (result) {
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/45 z-[60] anim-scrim" onClick={onClose} />
+        <div className="fixed z-[61] left-1/2 top-1/2 -translate-x-1/2 w-full max-w-sm bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-ink">{t.admin.move.resultTitle}</h2>
+            <button onClick={onClose} className="p-1">
+              <X className="w-5 h-5 text-muted" />
+            </button>
+          </div>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="w-12 h-12 rounded-full bg-ok-soft flex items-center justify-center">
+              <Check className="w-6 h-6 text-ok" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted">{t.admin.move.docNumber}</p>
+              <p className="text-lg font-semibold text-ink">{result.doc_number}</p>
+              <p className="text-xs text-muted mt-1">{n(String(result.lines))} {t.admin.move.resultLines}</p>
+            </div>
+            <button
+              onClick={() => { onDone(); window.location.assign(`/admin/more/documents/${result.doc_id}`) }}
+              className="flex items-center gap-2 bg-accent text-white rounded-lg px-4 py-2.5 text-sm font-medium"
+            >
+              <FileText className="w-4 h-4" />
+              {t.admin.move.openDoc}
+            </button>
+            <button onClick={onDone} className="text-sm text-muted">
+              {t.cleaning.cancel}
+            </button>
+          </div>
         </div>
       </>
     )
@@ -192,6 +248,23 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
             </div>
           )}
 
+          {/* Supplier (receipt only) */}
+          {opDef.needsCost && (
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5">{t.admin.move.supplier}</label>
+              <select
+                value={supplierId ?? ''}
+                onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+              >
+                <option value="">—</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Item search */}
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">{t.admin.move.items}</label>
@@ -244,13 +317,20 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                       </button>
                     </div>
                     {opDef.needsCost && (
-                      <input
-                        type="number"
-                        value={line.unitCost}
-                        onChange={(e) => updateLine(idx, { unitCost: e.target.value })}
-                        placeholder={t.admin.move.unitCost}
-                        className="flex-1 bg-app rounded-lg px-3 py-2 text-sm focus:outline-none"
-                      />
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          value={line.unitCost}
+                          onChange={(e) => updateLine(idx, { unitCost: e.target.value })}
+                          placeholder={t.admin.move.unitCost}
+                          className="w-full bg-app rounded-lg px-3 py-2 text-sm focus:outline-none"
+                        />
+                        {line.packSize > 1 && line.unitCost && (
+                          <p className="text-xs text-muted mt-0.5">
+                            {t.admin.move.costPerPack}: {(Number(line.unitCost) * line.packSize).toFixed(2)}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

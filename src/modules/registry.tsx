@@ -26,6 +26,8 @@ const AdminIncidents = lazy(() => import('@/modules/admin/AdminIncidents').then(
 const AdminContacts = lazy(() => import('@/modules/admin/AdminContacts').then(m => ({ default: m.AdminContacts })))
 const NormTemplatesPage = lazy(() => import('@/modules/admin/NormTemplatesPage').then(m => ({ default: m.NormTemplatesPage })))
 const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => ({ default: m.CatalogPage })))
+const DocumentsPage = lazy(() => import('@/modules/admin/DocumentsPage').then(m => ({ default: m.DocumentsPage })))
+const DocumentDetailPage = lazy(() => import('@/modules/admin/DocumentDetailPage').then(m => ({ default: m.DocumentDetailPage })))
 
 function Loading() {
   const { t } = useI18n()
@@ -73,6 +75,8 @@ export function AdminRoutes() {
           <Route path="more/contacts" element={<AdminContacts />} />
           <Route path="more/norm-templates" element={<NormTemplatesPage />} />
           <Route path="more/catalog" element={<CatalogPage />} />
+          <Route path="more/documents" element={<DocumentsPage />} />
+          <Route path="more/documents/:id" element={<DocumentDetailPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </Suspense>

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   fetchCategories,
   fetchItems,
+  fetchSuppliers,
   createCategory,
   updateCategory,
   deleteCategory,
@@ -10,7 +11,7 @@ import {
   deleteItem,
   itemHasHistory,
 } from '@/modules/admin/api'
-import type { Category, Item, ItemKind, BaseUnit } from '@/lib/database.types'
+import type { Category, Item, ItemKind, BaseUnit, Supplier } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { toast, errorMessage } from '@/lib/toast'
 import { Plus, Trash2, Edit3, X, Check, ChevronRight, ChevronDown, Package, Folder } from 'lucide-react'
@@ -282,6 +283,7 @@ function ItemEditor({
     min_stock: number | null
     track_on_hand: boolean
     active?: boolean
+    supplier_id?: number | null
   }) => void
 }) {
   const { t } = useI18n()
@@ -294,6 +296,12 @@ function ItemEditor({
   const [trackOnHand, setTrackOnHand] = useState(item?.track_on_hand ?? false)
   const [active, setActive] = useState(item?.active ?? true)
   const [unitLocked, setUnitLocked] = useState(false)
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [supplierId, setSupplierId] = useState<number | null>(item?.supplier_id ?? null)
+
+  useEffect(() => {
+    fetchSuppliers().then(setSuppliers).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!item) { setUnitLocked(false); return }
@@ -338,6 +346,13 @@ function ItemEditor({
               className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
           </Field>
         </div>
+        <Field label={t.admin.catalog.supplier}>
+          <select value={supplierId ?? ''} onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : null)}
+            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none">
+            <option value="">{t.admin.catalog.noSupplier}</option>
+            {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </Field>
         <Field label={t.admin.catalog.minStock}>
           <input type="number" min="0" step="0.001" value={minStock} onChange={(e) => setMinStock(e.target.value)}
             placeholder="—"
@@ -367,6 +382,7 @@ function ItemEditor({
           min_stock: minStock.trim() ? Number(minStock) : null,
           track_on_hand: trackOnHand,
           active: item ? active : undefined,
+          supplier_id: supplierId,
         })}
         disabled={!name.trim()}
       />

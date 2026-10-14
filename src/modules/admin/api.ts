@@ -17,6 +17,11 @@ import type {
   Item,
   ItemKind,
   BaseUnit,
+  Supplier,
+  DocumentRow,
+  DocumentWithSupplier,
+  AttachmentRow,
+  PostDocumentResult,
 } from '@/lib/database.types'
 
 // ---- Queries ----
@@ -212,6 +217,129 @@ export async function postMove(params: {
   return data as number
 }
 
+export async function postDocument(params: {
+  op: string
+  lines: Array<{ item_id: number; qty: number; unit_cost?: number | null }>
+  apartment?: number | null
+  staff?: number | null
+  supplier?: number | null
+  note?: string | null
+}): Promise<PostDocumentResult> {
+  const { data, error } = await supabase.rpc('post_document', {
+    p_op: params.op,
+    p_lines: params.lines,
+    p_apartment: params.apartment ?? null,
+    p_staff: params.staff ?? null,
+    p_supplier: params.supplier ?? null,
+    p_note: params.note ?? null,
+  })
+  if (error) throw new Error(error.message)
+  return data as PostDocumentResult
+}
+
+export async function fetchSuppliers(): Promise<Supplier[]> {
+  const { data, error } = await supabase
+    .from('suppliers')
+    .select('id,name,phone,note')
+    .order('name')
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
+
+export async function fetchDocuments(docType?: string): Promise<DocumentWithSupplier[]> {
+  let query = supabase
+    .from('documents')
+    .select('id,doc_type,number,doc_date,supplier_id,status,note,total_cost,created_at')
+    .order('created_at', { ascending: false })
+    .limit(100)
+  if (docType && docType !== 'all') query = query.eq('doc_type', docType)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as DocumentRow[]
+  const supplierIds = Array.from(new Set(rows.map((r) => r.supplier_id).filter((id): id is number => id !== null)))
+  let supplierMap = new Map<number, string>()
+  if (supplierIds.length) {
+    const supRes = await supabase.from('suppliers').select('id,name').in('id', supplierIds)
+    if (supRes.error) throw new Error(supRes.error.message)
+    supplierMap = new Map((supRes.data ?? []).map((s: { id: number; name: string }) => [s.id, s.name]))
+  }
+  return rows.map((r) => ({ ...r, supplier_name: r.supplier_id ? supplierMap.get(r.supplier_id) ?? null : null }))
+}
+
+export async function fetchDocumentMoves(docId: string): Promise<Array<StockMoveRow & { item_name: string; item_base_unit: string; item_pack_size: number; item_pack_label: string }>> {
+  const { data, error } = await supabase
+    .from('stock_moves')
+    .select('id,item_id,from_loc,to_loc,qty,unit_cost,source_type,source_id,apartment_id,staff_id,note,moved_at')
+    .eq('doc_id', docId)
+    .order('moved_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as StockMoveRow[]
+  const itemIds = Array.from(new Set(rows.map((r) => r.item_id)))
+  const locationIds = Array.from(new Set(rows.flatMap((r) => [r.from_loc, r.to_loc])))
+  const [itemsResult, locationsResult] = await Promise.all([
+    itemIds.length ? supabase.from('items').select('id,name,base_unit,pack_size,pack_label').in('id', itemIds) : Promise.resolve({ data: [], error: null }),
+    locationIds.length ? supabase.from('locations').select('id,name,type').in('id', locationIds) : Promise.resolve({ data: [], error: null }),
+  ])
+  if (itemsResult.error) throw new Error(itemsResult.error.message)
+  if (locationsResult.error) throw new Error(locationsResult.error.message)
+  const itemMap = new Map((itemsResult.data ?? []).map((i) => [i.id, i]))
+  const locationMap = new Map((locationsResult.data ?? []).map((l) => [l.id, l]))
+  return rows.map((r) => {
+    const item = itemMap.get(r.item_id)
+    return {
+      ...r,
+      from_location: locationMap.get(r.from_loc),
+      to_location: locationMap.get(r.to_loc),
+      item_name: item?.name ?? '?',
+      item_base_unit: item?.base_unit ?? 'pcs',
+      item_pack_size: item?.pack_size ?? 1,
+      item_pack_label: item?.pack_label ?? '',
+    }
+  })
+}
+
+export async function fetchAttachments(docId: string): Promise<AttachmentRow[]> {
+  const { data, error } = await supabase
+    .from('attachments')
+    .select('id,doc_id,incident_id,kind,storage_path,mime,created_at')
+    .eq('doc_id', docId)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
+
+export async function uploadAttachment(docId: string, file: File): Promise<AttachmentRow> {
+  const timestamp = Date.now()
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
+  const path = `${docId}/${timestamp}-${safeName}`
+  const { error: uploadError } = await supabase.storage
+    .from('receipts')
+    .upload(path, file, { upsert: false })
+  if (uploadError) throw new Error(uploadError.message)
+  const { data, error } = await supabase
+    .from('attachments')
+    .insert({ doc_id: docId, kind: 'receipt', storage_path: path, mime: file.type })
+    .select('id,doc_id,incident_id,kind,storage_path,mime,created_at')
+    .single()
+  if (error) throw new Error(error.message)
+  return data as AttachmentRow
+}
+
+export async function createSignedUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('receipts')
+    .createSignedUrl(path, 3600)
+  if (error) throw new Error(error.message)
+  return data.signedUrl
+}
+
+export async function deleteAttachment(id: string, storagePath: string): Promise<void> {
+  const { error: storageError } = await supabase.storage.from('receipts').remove([storagePath])
+  if (storageError) throw new Error(storageError.message)
+  const { error } = await supabase.from('attachments').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export async function issueMissing(apartmentId: number): Promise<IssueMissingResult> {
   const { data, error } = await supabase.rpc('issue_missing_to_apartment', {
     p_apartment: apartmentId,
@@ -369,7 +497,7 @@ export async function deleteCategory(id: number): Promise<void> {
 export async function fetchItems(): Promise<Item[]> {
   const { data, error } = await supabase
     .from('items')
-    .select('id,category_id,name,base_unit,pack_size,pack_label,min_stock,track_on_hand,qr_code,photo_path,active,sort')
+    .select('id,category_id,name,base_unit,pack_size,pack_label,min_stock,track_on_hand,qr_code,photo_path,active,sort,supplier_id')
     .order('sort')
     .order('name')
   if (error) throw new Error(error.message)
@@ -384,12 +512,13 @@ export async function createItem(params: {
   pack_label: string
   min_stock: number | null
   track_on_hand: boolean
+  supplier_id?: number | null
 }): Promise<void> {
   const { error } = await supabase.from('items').insert({ ...params, active: true, sort: 0 })
   if (error) throw new Error(error.message)
 }
 
-export async function updateItem(id: number, patch: Partial<Pick<Item, 'name' | 'category_id' | 'base_unit' | 'pack_size' | 'pack_label' | 'min_stock' | 'track_on_hand' | 'active'>>): Promise<void> {
+export async function updateItem(id: number, patch: Partial<Pick<Item, 'name' | 'category_id' | 'base_unit' | 'pack_size' | 'pack_label' | 'min_stock' | 'track_on_hand' | 'active' | 'supplier_id'>>): Promise<void> {
   const { error } = await supabase.from('items').update(patch).eq('id', id)
   if (error) throw new Error(error.message)
 }

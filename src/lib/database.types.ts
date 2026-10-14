@@ -61,6 +61,13 @@ export interface Category {
   sort: number
 }
 
+export interface Supplier {
+  id: number
+  name: string
+  phone: string | null
+  note: string | null
+}
+
 export interface Item {
   id: number
   category_id: number
@@ -74,6 +81,7 @@ export interface Item {
   photo_path: string | null
   active: boolean
   sort: number
+  supplier_id: number | null
 }
 
 export interface Contact {
@@ -265,4 +273,36 @@ export interface MoveOp {
   needsApartment: boolean
   needsStaff: boolean
   needsCost: boolean
+}
+
+export interface DocumentRow {
+  id: string
+  doc_type: DocType
+  number: string
+  doc_date: string
+  supplier_id: number | null
+  status: DocStatus
+  note: string | null
+  total_cost: number | null
+  created_at: string
+}
+
+export interface DocumentWithSupplier extends DocumentRow {
+  supplier_name: string | null
+}
+
+export interface AttachmentRow {
+  id: string
+  doc_id: string | null
+  incident_id: string | null
+  kind: string
+  storage_path: string
+  mime: string | null
+  created_at: string
+}
+
+export interface PostDocumentResult {
+  doc_id: string
+  doc_number: string
+  lines: number
 }
