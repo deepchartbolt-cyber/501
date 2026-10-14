@@ -44,8 +44,9 @@ export async function fetchApartmentGaps(): Promise<ApartmentGapRow[]> {
 export async function fetchShortageEvents(): Promise<EventRow[]> {
   const { data, error } = await supabase
     .from('events')
-    .select('id,type,payload,created_at')
+    .select('id,type,payload,created_at,processed_at')
     .eq('type', 'shortage')
+    .is('processed_at', null)
     .order('created_at', { ascending: false })
     .limit(20)
   if (error) throw new Error(error.message)
@@ -61,15 +62,31 @@ export async function fetchWarehouseStock(): Promise<WarehouseStockRow[]> {
   return data ?? []
 }
 
-export async function fetchStockMoves(itemId: number): Promise<StockMoveRow[]> {
+export async function fetchStockMoves(itemId: number, offset = 0): Promise<StockMoveRow[]> {
   const { data, error } = await supabase
     .from('stock_moves')
-    .select('id,item_id,from_loc,to_loc,qty,unit_cost,source_type,source_id,apartment_id,staff_id,note,moved_at')
+    .select('id,item_id,from_loc,to_loc,qty,unit_cost,source_type,source_id,apartment_id,staff_id,note,moved_at,created_by')
     .eq('item_id', itemId)
     .order('moved_at', { ascending: false })
-    .limit(30)
+    .range(offset, offset + 49)
   if (error) throw new Error(error.message)
-  return data ?? []
+  const rows = (data ?? []) as Array<StockMoveRow & { created_by: string | null }>
+  const locationIds = Array.from(new Set(rows.flatMap((row) => [row.from_loc, row.to_loc])))
+  const authorIds = Array.from(new Set(rows.map((row) => row.created_by).filter((id): id is string => id !== null)))
+  const [locationsResult, profilesResult] = await Promise.all([
+    locationIds.length ? supabase.from('locations').select('id,name,type').in('id', locationIds) : Promise.resolve({ data: [], error: null }),
+    authorIds.length ? supabase.from('profiles').select('id,full_name,login').in('id', authorIds) : Promise.resolve({ data: [], error: null }),
+  ])
+  if (locationsResult.error) throw new Error(locationsResult.error.message)
+  if (profilesResult.error) throw new Error(profilesResult.error.message)
+  const locationMap = new Map((locationsResult.data ?? []).map((location) => [location.id, location]))
+  const profileMap = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile.full_name || profile.login]))
+  return rows.map(({ created_by: createdBy, ...row }) => ({
+    ...row,
+    from_location: locationMap.get(row.from_loc),
+    to_location: locationMap.get(row.to_loc),
+    author: createdBy ? profileMap.get(createdBy) ?? null : null,
+  }))
 }
 
 export async function fetchApartmentsAdmin(): Promise<Apartment[]> {

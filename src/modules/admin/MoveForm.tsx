@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, postMove } from '@/modules/admin/api'
 import type { WarehouseStockRow, Apartment, Staff } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -24,6 +25,7 @@ interface CartLine {
 
 export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const { t, n } = useI18n()
+  const [searchParams] = useSearchParams()
   const ops: MoveOpDef[] = [
     { op: 'receipt', label: t.admin.move.receipt, needsApartment: false, needsStaff: false, needsCost: true },
     { op: 'issue_apartment', label: t.admin.move.issueApt, needsApartment: true, needsStaff: false, needsCost: false },
@@ -38,7 +40,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [staffList, setStaffList] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
-  const [op, setOp] = useState<string>('receipt')
+  const [op, setOp] = useState<string>(() => searchParams.get('op') ?? 'receipt')
   const [apartmentId, setApartmentId] = useState<number | null>(null)
   const [staffId, setStaffId] = useState<number | null>(null)
   const [note, setNote] = useState('')

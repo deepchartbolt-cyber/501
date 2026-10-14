@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings } from '@/modules/admin/api'
-import type { ToOrderRow, ApartmentGapRow, EventRow, Apartment, Building, AptType } from '@/lib/database.types'
+import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents } from '@/modules/admin/api'
+import type { ToOrderRow, ApartmentGapRow, EventRow, Apartment, Building, AptType, Incident } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
-import { AlertTriangle, TrendingDown, PackageX } from 'lucide-react'
+import { AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wrench, ArrowDownToLine, Trash2, CheckCircle2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 function pctColor(p: number): string {
@@ -32,16 +32,18 @@ export function Dashboard() {
   const [shortages, setShortages] = useState<EventRow[]>([])
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
+  const [incidents, setIncidents] = useState<Incident[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings()])
-      .then(([to, ga, sh, ap, bl]) => {
+    Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents()])
+      .then(([to, ga, sh, ap, bl, inc]) => {
         setToOrder(to)
         setGaps(ga)
         setShortages(sh)
         setApartments(ap)
         setBuildings(bl)
+        setIncidents(inc)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -81,6 +83,14 @@ export function Dashboard() {
   }
 
   const incompleteCount = Array.from(gapApartments.values()).filter((a) => a.items.length > 0).length
+  const pendingIncidents = incidents.filter((incident) => incident.status === 'new').length
+
+  const tiles = [
+    { label: t.admin.dashboard.toOrder, count: toOrder.length, icon: TrendingDown, tone: 'text-bad', to: '/admin/stock?below=1' },
+    { label: t.admin.dashboard.gaps, count: incompleteCount, icon: Boxes, tone: 'text-warn', to: '/admin/apartments' },
+    { label: t.admin.dashboard.pendingIncidents, count: pendingIncidents, icon: ClipboardList, tone: 'text-accent', to: '/admin/more/incidents' },
+    { label: t.admin.dashboard.unprocessedShortages, count: shortages.length, icon: AlertTriangle, tone: 'text-bad', to: '/admin' },
+  ]
 
   return (
     <div className="px-4 pt-5 pb-28 lg:px-0 lg:pt-0">
@@ -94,21 +104,25 @@ export function Dashboard() {
         </button>
       </div>
 
-      {/* 3-counter strip */}
-      <div className="grid grid-cols-3 bg-surface border border-line rounded-xl mb-5 overflow-hidden">
-        <div className="px-4 py-3.5 border-r border-line">
-          <b className="text-2xl font-semibold text-ink block">{n(String(toOrder.length))}</b>
-          <span className="text-muted text-xs">{t.admin.dashboard.toOrder}</span>
-        </div>
-        <div className="px-4 py-3.5 border-r border-line">
-          <b className="text-2xl font-semibold text-ink block">{n(String(incompleteCount))}</b>
-          <span className="text-muted text-xs">{t.admin.dashboard.gaps}</span>
-        </div>
-        <div className="px-4 py-3.5">
-          <b className="text-2xl font-semibold text-ink block">{n(String(shortages.length))}</b>
-          <span className="text-muted text-xs">{t.admin.dashboard.shortages}</span>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-5">
+        {tiles.map(({ label, count, icon: Icon, tone, to }) => (
+          <button key={label} onClick={() => navigate(to)} className="bg-surface border border-line rounded-xl px-3.5 py-3 text-left transition-colors hover:border-accent">
+            <Icon className={`w-5 h-5 ${tone} mb-2`} />
+            <b className="text-2xl font-semibold text-ink block">{n(String(count))}</b>
+            <span className="text-muted text-xs">{label}</span>
+          </button>
+        ))}
       </div>
+
+      <section className="bg-surface border border-line rounded-xl p-4 mb-5">
+        <h2 className="text-sm font-semibold text-ink mb-3">{t.admin.dashboard.quickActions}</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <button onClick={() => navigate('/admin/move?op=receipt')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><ArrowDownToLine className="w-4 h-4 text-accent" />{t.admin.move.receipt}</button>
+          <button onClick={() => navigate('/admin/move?op=issue_apartment')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Wrench className="w-4 h-4 text-accent" />{t.admin.dashboard.issue}</button>
+          <button onClick={() => navigate('/admin/move?op=writeoff_warehouse')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Trash2 className="w-4 h-4 text-accent" />{t.admin.dashboard.writeoff}</button>
+          <button onClick={() => navigate('/admin/apartments')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><CheckCircle2 className="w-4 h-4 text-accent" />{t.admin.dashboard.assemble}</button>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-5">
         {/* Left: to-order */}
@@ -185,7 +199,7 @@ export function Dashboard() {
         <div className="mt-5">
           <div className="flex items-center gap-2 mb-2 px-1">
             <AlertTriangle className="w-4 h-4 text-bad" />
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">{t.admin.dashboard.shortages}</h2>
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">{t.admin.dashboard.unprocessedShortages}</h2>
           </div>
           <div className="space-y-2">
             {shortages.map((ev) => {

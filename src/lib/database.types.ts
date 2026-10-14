@@ -204,6 +204,7 @@ export interface EventRow {
   type: string
   payload: Json
   created_at: string
+  processed_at: string | null
 }
 
 export interface StockMoveRow {
@@ -219,6 +220,9 @@ export interface StockMoveRow {
   staff_id: number | null
   note: string | null
   moved_at: string
+  from_location?: { name: string; type: LocType }
+  to_location?: { name: string; type: LocType }
+  author?: string | null
 }
 
 export interface NormRuleRow {

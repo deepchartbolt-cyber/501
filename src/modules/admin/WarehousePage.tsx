@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { fetchWarehouseStock, fetchStockMoves } from '@/modules/admin/api'
 import type { WarehouseStockRow, StockMoveRow } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty, formatDateTime } from '@/lib/format'
+import { toast, errorMessage } from '@/lib/toast'
 import { Search } from 'lucide-react'
 
 type KindFilter = 'all' | 'assets' | 'consumables'
@@ -26,11 +28,15 @@ export function WarehousePage() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [moves, setMoves] = useState<StockMoveRow[]>([])
   const [movesLoading, setMovesLoading] = useState(false)
+  const [movesOffset, setMovesOffset] = useState(0)
+  const [hasMoreMoves, setHasMoreMoves] = useState(false)
+  const [searchParams] = useSearchParams()
+  const belowOnly = searchParams.get('below') === '1'
 
   useEffect(() => {
     fetchWarehouseStock()
       .then(setStock)
-      .catch(() => {})
+      .catch((error) => toast(errorMessage(error), 'error'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -45,10 +51,11 @@ export function WarehousePage() {
       if (kindFilter === 'assets' && s.kind !== 'asset') return false
       if (kindFilter === 'consumables' && s.kind !== 'consumable') return false
       if (categoryFilter !== 'all' && s.category !== categoryFilter) return false
+      if (belowOnly && !s.below_min) return false
       if (search.trim() && !s.name.toLowerCase().includes(search.toLowerCase().trim())) return false
       return true
     })
-  }, [stock, kindFilter, categoryFilter, search])
+  }, [stock, kindFilter, categoryFilter, search, belowOnly])
 
   const grouped = useMemo(() => {
     const map = new Map<string, WarehouseStockRow[]>()
@@ -57,8 +64,20 @@ export function WarehousePage() {
       list.push(s)
       map.set(s.category, list)
     }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+    return Array.from(map.entries()).map(([category, items]) => [category, [...items].sort((a, b) => Number(b.below_min) - Number(a.below_min) || a.name.localeCompare(b.name))] as const).sort((a, b) => a[0].localeCompare(b[0]))
   }, [filtered])
+
+  const loadMoves = (itemId: number, offset: number, append: boolean) => {
+    setMovesLoading(true)
+    fetchStockMoves(itemId, offset)
+      .then((nextMoves) => {
+        setMoves((previous) => append ? [...previous, ...nextMoves] : nextMoves)
+        setMovesOffset(offset + nextMoves.length)
+        setHasMoreMoves(nextMoves.length === 50)
+      })
+      .catch((error) => toast(errorMessage(error), 'error'))
+      .finally(() => setMovesLoading(false))
+  }
 
   const toggleExpand = (itemId: number) => {
     if (expandedId === itemId) {
@@ -66,11 +85,10 @@ export function WarehousePage() {
       return
     }
     setExpandedId(itemId)
-    setMovesLoading(true)
-    fetchStockMoves(itemId)
-      .then(setMoves)
-      .catch(() => setMoves([]))
-      .finally(() => setMovesLoading(false))
+    setMoves([])
+    setMovesOffset(0)
+    setHasMoreMoves(false)
+    loadMoves(itemId, 0, false)
   }
 
   if (loading) {
@@ -160,22 +178,41 @@ export function WarehousePage() {
                           <tr>
                             <td colSpan={3} className="px-2.5 py-3 border-b border-line bg-app">
                               <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">{t.admin.stock.history}</div>
-                              {movesLoading ? (
+                              {movesLoading && moves.length === 0 ? (
                                 <div className="text-sm text-muted">{t.app.loading}</div>
                               ) : moves.length === 0 ? (
                                 <div className="text-sm text-muted">{t.admin.stock.noHistory}</div>
                               ) : (
-                                <div className="space-y-1.5">
-                                  {moves.map((m) => (
-                                    <div key={m.id} className="text-xs flex items-start justify-between gap-2">
-                                      <div className="min-w-0">
-                                        <span className="text-ink">{m.source_type}</span>
-                                        {m.note && <span className="text-muted"> · {m.note}</span>}
-                                        <span className="text-muted block">{n(formatDateTime(m.moved_at))}</span>
+                                <div className="space-y-2">
+                                  {moves.map((m) => {
+                                    const sourceTypes = t.admin.stock.sourceTypes
+                                    const sourceLabel = sourceTypes[m.source_type as keyof typeof sourceTypes] ?? m.source_type
+                                    const locationLabel = (location: StockMoveRow['from_location']) => {
+                                      if (!location) return '—'
+                                      if (location.type === 'warehouse') return t.admin.stock.warehouse
+                                      if (location.type === 'sink') return t.admin.stock.expense
+                                      return location.name
+                                    }
+                                    return (
+                                      <div key={m.id} className="text-xs border-b border-line last:border-0 pb-2 last:pb-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="min-w-0">
+                                            <span className="text-ink font-medium">{sourceLabel}</span>
+                                            <span className="text-muted block">{n(formatDateTime(m.moved_at))}</span>
+                                            <span className="text-muted block">{locationLabel(m.from_location)} → {locationLabel(m.to_location)}</span>
+                                            {m.author && <span className="text-muted block">{t.admin.stock.author}: {m.author}</span>}
+                                            {m.note && <span className="text-muted block">{m.note}</span>}
+                                          </div>
+                                          <span className="text-muted shrink-0">{n(formatQty(m.qty, item))}</span>
+                                        </div>
                                       </div>
-                                      <span className="text-muted shrink-0">{n(String(m.qty))}</span>
-                                    </div>
-                                  ))}
+                                    )
+                                  })}
+                                  {hasMoreMoves && (
+                                    <button onClick={() => loadMoves(item.item_id, movesOffset, true)} disabled={movesLoading} className="text-xs text-accent font-medium disabled:opacity-50">
+                                      {movesLoading ? t.app.loading : t.admin.stock.loadMore}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </td>
