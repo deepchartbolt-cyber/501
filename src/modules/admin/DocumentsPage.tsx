@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchDocuments } from '@/modules/admin/api'
-import type { DocumentWithSupplier, DocType } from '@/lib/database.types'
+import type { DocumentWithSupplier } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatDate } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'

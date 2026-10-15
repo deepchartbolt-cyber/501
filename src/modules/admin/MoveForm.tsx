@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, fetchSuppliers, postDocument } from '@/modules/admin/api'
 import type { WarehouseStockRow, Apartment, Staff, Supplier, PostDocumentResult } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -28,6 +28,7 @@ interface CartLine {
 export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const { t, n } = useI18n()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const ops: MoveOpDef[] = [
     { op: 'receipt', label: t.admin.move.receipt, needsApartment: false, needsStaff: false, needsCost: true },
     { op: 'issue_apartment', label: t.admin.move.issueApt, needsApartment: true, needsStaff: false, needsCost: false },
@@ -169,7 +170,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               <p className="text-xs text-muted mt-1">{n(String(result.lines))} {t.admin.move.resultLines}</p>
             </div>
             <button
-              onClick={() => { onDone(); window.location.assign(`/admin/more/documents/${result.doc_id}`) }}
+              onClick={() => { onDone(); navigate(`/admin/more/documents/${result.doc_id}`) }}
               className="flex items-center gap-2 bg-accent text-white rounded-lg px-4 py-2.5 text-sm font-medium"
             >
               <FileText className="w-4 h-4" />

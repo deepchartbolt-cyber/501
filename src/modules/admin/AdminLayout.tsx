@@ -24,7 +24,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-app flex flex-col lg:grid lg:grid-cols-[208px_1fr]">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col bg-surface border-r border-line sticky top-0 h-screen p-5 pb-8">
+      <aside className="hidden lg:flex flex-col bg-surface border-r border-line sticky top-0 h-screen p-5 pb-8 no-print">
         <div className="flex items-center justify-between px-2.5 pb-4.5">
           <span className="font-semibold text-lg text-ink">{t.app.name}</span>
           <LangSwitcher compact />
@@ -55,7 +55,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main className="flex-1 lg:px-7 lg:py-6 pb-24 lg:pb-8 max-w-[1180px] w-full">
         {/* Mobile top bar with language switcher */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-2 bg-surface border-b border-line sticky top-0 z-30">
+        <div className="lg:hidden flex items-center justify-between px-4 py-2 bg-surface border-b border-line sticky top-0 z-30 no-print">
           <span className="font-semibold text-ink text-sm">{t.app.name}</span>
           <LangSwitcher compact />
         </div>
@@ -63,7 +63,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile bottom bar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-line z-50 flex">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-line z-50 flex no-print">
         {tabs.map((tab) => {
           const active = tab.end ? pathname === tab.to : pathname.startsWith(tab.to)
           const Icon = tab.icon

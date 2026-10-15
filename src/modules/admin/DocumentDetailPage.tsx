@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  fetchDocuments,
   fetchDocumentMoves,
   fetchAttachments,
   uploadAttachment,
@@ -9,6 +8,7 @@ import {
   createSignedUrl,
 } from '@/modules/admin/api'
 import type { DocumentWithSupplier, AttachmentRow, BaseUnit } from '@/lib/database.types'
+import { supabase } from '@/lib/supabase'
 import { useI18n } from '@/i18n'
 import { formatDateTime, formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
@@ -46,10 +46,21 @@ export function DocumentDetailPage() {
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    Promise.all([fetchDocuments(), fetchDocumentMoves(id), fetchAttachments(id)])
-      .then(([allDocs, mv, atts]) => {
-        const found = allDocs.find((d) => d.id === id) ?? null
-        setDoc(found)
+    Promise.all([
+      supabase.from('documents').select('id,doc_type,number,doc_date,supplier_id,status,note,total_cost,created_at').eq('id', id).single(),
+      fetchDocumentMoves(id),
+      fetchAttachments(id),
+    ])
+      .then(async ([docRes, mv, atts]) => {
+        if (docRes.error) throw new Error(docRes.error.message)
+        const docRow = docRes.data as DocumentWithSupplier
+        if (docRow.supplier_id) {
+          const supRes = await supabase.from('suppliers').select('name').eq('id', docRow.supplier_id).single()
+          docRow.supplier_name = supRes.data?.name ?? null
+        } else {
+          docRow.supplier_name = null
+        }
+        setDoc(docRow)
         setMoves(mv as DocMoveRow[])
         setAttachments(atts)
       })
