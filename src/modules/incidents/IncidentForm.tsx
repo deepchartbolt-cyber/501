@@ -7,7 +7,7 @@ import { useAuth } from '@/modules/core/store'
 import { useI18n } from '@/i18n'
 import { ArrowLeft, Camera, X, Loader2 } from 'lucide-react'
 
-export function IncidentForm() {
+export function IncidentForm({ backTo }: { backTo?: string }) {
   const { t } = useI18n()
   const kinds: { value: IncidentKind; label: string }[] = [
     { value: 'breakdown', label: t.incidents.kindBreakdown },
@@ -17,7 +17,7 @@ export function IncidentForm() {
   ]
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const preselectApt = params.get('apt')
+  const preselectApt = params.get('apartment') ?? params.get('apt')
   const profile = useAuth((s) => s.profile)
   const [apartments, setApartments] = useState<SvApartment[]>([])
   const [items, setItems] = useState<SvItem[]>([])
@@ -62,7 +62,8 @@ export function IncidentForm() {
         for (const file of photos) photoPaths.push(await uploadIncidentPhoto(profile.id, file))
       }
       await createIncident({ apartmentId: aptId, itemId, freeText: freeText.trim() || null, kind, qty: Number(qty) || 1, comment: comment.trim() || null, photoPaths })
-      navigate('/sv/incidents')
+      if (backTo) navigate(backTo)
+      else navigate('/sv/incidents')
     } catch (e) { setError(String(e)) } finally { setSubmitting(false) }
   }
 
@@ -72,7 +73,7 @@ export function IncidentForm() {
     <div className="min-h-screen bg-app">
       <div className="bg-surface border-b border-line sticky top-0 z-30">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-1 -ml-1"><ArrowLeft className="w-5 h-5 text-muted" /></button>
+          <button onClick={() => backTo ? navigate(backTo) : navigate(-1)} className="p-1 -ml-1"><ArrowLeft className="w-5 h-5 text-muted" /></button>
           <h1 className="text-lg font-semibold text-ink">{t.incidents.title}</h1>
         </div>
       </div>
@@ -133,7 +134,7 @@ export function IncidentForm() {
       </div>
       <div className="fixed bottom-16 left-0 right-0 bg-surface border-t border-line px-4 py-3 z-30">
         <div className="max-w-lg mx-auto flex gap-3">
-          <button onClick={() => navigate(-1)} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">{t.incidents.cancel}</button>
+          <button onClick={() => backTo ? navigate(backTo) : navigate(-1)} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">{t.incidents.cancel}</button>
           <button onClick={handleSubmit} disabled={submitting}
             className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}

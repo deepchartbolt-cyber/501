@@ -1,11 +1,13 @@
 import { lazy, Suspense, useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { SvLayout } from '@/modules/core/SvLayout'
+import { QrLayout } from '@/modules/qr/QrLayout'
 import { useAuth } from '@/modules/core/store'
 import { useI18n } from '@/i18n'
 import { Shield } from 'lucide-react'
 import { AdminLayout } from '@/modules/admin/AdminLayout'
 import { MoveModal } from '@/modules/admin/MoveForm'
+import { LoginScreen } from '@/modules/core/AuthScreens'
 
 const ApartmentList = lazy(() => import('@/modules/apartments/ApartmentList').then(m => ({ default: m.ApartmentList })))
 const ApartmentDetail = lazy(() => import('@/modules/apartments/ApartmentDetail').then(m => ({ default: m.ApartmentDetail })))
@@ -26,8 +28,10 @@ const AdminIncidents = lazy(() => import('@/modules/admin/AdminIncidents').then(
 const AdminContacts = lazy(() => import('@/modules/admin/AdminContacts').then(m => ({ default: m.AdminContacts })))
 const NormTemplatesPage = lazy(() => import('@/modules/admin/NormTemplatesPage').then(m => ({ default: m.NormTemplatesPage })))
 const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => ({ default: m.CatalogPage })))
+const QrPage = lazy(() => import('@/modules/admin/QrPage').then(m => ({ default: m.QrPage })))
 const DocumentsPage = lazy(() => import('@/modules/admin/DocumentsPage').then(m => ({ default: m.DocumentsPage })))
 const DocumentDetailPage = lazy(() => import('@/modules/admin/DocumentDetailPage').then(m => ({ default: m.DocumentDetailPage })))
+const QrApartmentPage = lazy(() => import('@/modules/qr/QrApartmentPage').then(m => ({ default: m.QrApartmentPage })))
 
 function Loading() {
   const { t } = useI18n()
@@ -58,6 +62,47 @@ function MoveRoute() {
   )
 }
 
+function QrCleanRoute() {
+  const { id } = useParams<{ id: string }>()
+  const backTo = `/qr/${id}`
+  return (
+    <>
+      <QrApartmentPage />
+      <CleaningSheet backTo={backTo} />
+    </>
+  )
+}
+
+function QrIncidentRoute() {
+  const { id } = useParams<{ id: string }>()
+  const backTo = `/qr/${id}`
+  return (
+    <>
+      <QrApartmentPage />
+      <IncidentForm backTo={backTo} />
+    </>
+  )
+}
+
+export function QrRoutes() {
+  const state = useAuth((s) => s.state)
+  const profile = useAuth((s) => s.profile)
+  if (state === 'loading') return <Loading />
+  if (state === 'login' || !profile) return <LoginScreen />
+  return (
+    <QrLayout>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path=":id" element={<QrApartmentPage />} />
+          <Route path=":id/clean" element={<QrCleanRoute />} />
+          <Route path=":id/incident" element={<QrIncidentRoute />} />
+          <Route path="*" element={<Navigate to="/sv" replace />} />
+        </Routes>
+      </Suspense>
+    </QrLayout>
+  )
+}
+
 export function AdminRoutes() {
   return (
     <AdminLayout>
@@ -75,6 +120,7 @@ export function AdminRoutes() {
           <Route path="more/contacts" element={<AdminContacts />} />
           <Route path="more/norm-templates" element={<NormTemplatesPage />} />
           <Route path="more/catalog" element={<CatalogPage />} />
+          <Route path="more/qr" element={<QrPage />} />
           <Route path="more/documents" element={<DocumentsPage />} />
           <Route path="more/documents/:id" element={<DocumentDetailPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />

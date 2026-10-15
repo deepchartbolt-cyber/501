@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth, homePathForRole } from '@/modules/core/store'
 import { BootstrapScreen, LoginScreen } from '@/modules/core/AuthScreens'
-import { SvRoutes, AdminRoutes } from '@/modules/registry'
+import { SvRoutes, AdminRoutes, QrRoutes } from '@/modules/registry'
 import { useI18n } from '@/i18n'
 import { Package } from 'lucide-react'
 import { ToastContainer } from '@/lib/toast'
@@ -42,6 +42,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/sv/*" element={<SvRoutes />} />
+          <Route path="/qr/*" element={<QrRoutes />} />
           <Route path="/admin/*" element={<AdminRoutes />} />
           <Route path="*" element={<Navigate to={home} replace />} />
         </Routes>

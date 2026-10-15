@@ -9,11 +9,12 @@ import { X, Check, Loader2, AlertTriangle, Star } from 'lucide-react'
 
 const writeoffTypes: NormType[] = ['turnover_replenish', 'cleaning_consumption']
 
-export function CleaningSheet() {
+export function CleaningSheet({ backTo }: { backTo?: string }) {
   const { t, n } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const aptId = Number(id)
+  const goBack = () => navigate(backTo ?? `/sv/apartments/${aptId}`)
   const [norms, setNorms] = useState<SvNorm[]>([])
   const [staff, setStaff] = useState<SvStaff[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,13 +60,13 @@ export function CleaningSheet() {
     const cleanedAt = new Date().toISOString()
     const params = { apartmentId: aptId, cleanedAt, clientOpId: clientOpIdRef.current, staffIds: selectedStaff, leadStaffId: leadStaffId ?? selectedStaff[0] ?? null, note: note.trim() || null }
     try {
-      if (!navigator.onLine) { await queueCleaningOffline(params); setOffline(true); setTimeout(() => navigate(`/sv/apartments/${aptId}`), 1500); return }
+      if (!navigator.onLine) { await queueCleaningOffline(params); setOffline(true); setTimeout(() => goBack(), 1500); return }
       const res = await completeCleaning(params)
       setResult(res)
       if (res.duplicate) setError(t.cleaning.duplicate)
-      setTimeout(() => navigate(`/sv/apartments/${aptId}`), 1200)
+      setTimeout(() => goBack(), 1200)
     } catch (e) {
-      try { await queueCleaningOffline(params); setOffline(true); setTimeout(() => navigate(`/sv/apartments/${aptId}`), 1500) } catch { setError(String(e)) }
+      try { await queueCleaningOffline(params); setOffline(true); setTimeout(() => goBack(), 1500) } catch { setError(String(e)) }
     } finally { setSubmitting(false) }
   }
 
@@ -85,7 +86,7 @@ export function CleaningSheet() {
         </div>
         <div className="px-5 py-3 flex items-center justify-between border-b border-line">
           <h2 className="text-base font-semibold text-ink">{t.cleaning.title}</h2>
-          <button onClick={() => navigate(`/sv/apartments/${aptId}`)} className="p-1">
+          <button onClick={goBack} className="p-1">
             <X className="w-5 h-5 text-muted" />
           </button>
         </div>
@@ -162,7 +163,7 @@ export function CleaningSheet() {
           )}
         </div>
         <div className="sticky bottom-0 bg-surface border-t border-line px-5 py-3 flex gap-3">
-          <button onClick={() => navigate(`/sv/apartments/${aptId}`)} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">{t.cleaning.cancel}</button>
+          <button onClick={goBack} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">{t.cleaning.cancel}</button>
           <button onClick={handleConfirm} disabled={submitting || (needsStaff && selectedStaff.length === 0)}
             className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
